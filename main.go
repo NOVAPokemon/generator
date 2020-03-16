@@ -12,12 +12,16 @@ import (
 const host = "localhost"
 const Port = 8002
 
-var NumberOfPokemons int
+var (
+	NumberOfItems    int
+	NumberOfPokemons int
+)
 
 func main() {
 	rand.Seed(time.Now().Unix())
 
 	NumberOfPokemons = getNumberOfPokemons()
+	NumberOfItems = getNumberOfItems()
 
 	router := utils.NewRouter(routes)
 	addr := fmt.Sprintf("%s:%d", host, Port)
@@ -27,6 +31,11 @@ func main() {
 }
 
 func getNumberOfPokemons() int {
+	// TODO change this for mongoDB call to size of collection
+	return 20
+}
+
+func getNumberOfItems() int {
 	// TODO change this for mongoDB call to size of collection
 	return 20
 }
