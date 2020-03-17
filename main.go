@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/NOVAPokemon/utils"
+	"github.com/NOVAPokemon/utils/database/items"
 	"github.com/NOVAPokemon/utils/database/pokemon"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,15 +12,20 @@ import (
 	"time"
 )
 
+// Pokemons taken from https://raw.githubusercontent.com/sindresorhus/pokemon/master/data/en.json
 const PokemonsFile = "pokemons.json"
+const numberOfPokemonsToGenerate = 10
 const MaxLevel = 100
 const MaxHP = 500
 const MaxDamage = 250
 
-const numberOfPokemonsToGenerate = 10
+const ItemsFile = "items.json"
+const numberOfItemsToGenerate = 10
+
 const intervalBetweenGenerations = 2 * time.Minute
 
 var pokemonSpecies = loadPokemons()
+var itemNames = loadItems()
 
 func main() {
 	rand.Seed(time.Now().Unix())
@@ -30,6 +36,9 @@ func main() {
 		log.Info("Refreshing wild pokemons...")
 		cleanWildPokemons()
 		generateWildPokemons()
+		log.Info("Refreshing catchable items...")
+		cleanItems()
+		generateItems()
 		time.Sleep(intervalBetweenGenerations)
 	}
 }
@@ -62,9 +71,28 @@ func generateWildPokemons() {
 	}
 }
 
-func getNumberOfItems() int {
-	// TODO change this for mongoDB call to size of collection
-	return 20
+func cleanItems() {
+	err := items.DeleteCatchableItems()
+
+	if err != nil {
+		return
+	}
+}
+
+func generateItems() {
+	for i := 0; i < numberOfItemsToGenerate; i++ {
+		toAdd := utils.Item{
+			Id:   primitive.NewObjectID(),
+			Name: itemNames[rand.Intn(len(itemNames))],
+		}
+
+		err, _ := items.AddCatchableItem(toAdd)
+
+		if err != nil {
+			log.Error("Error adding item")
+			log.Error(err)
+		}
+	}
 }
 
 func loadPokemons() []string {
@@ -82,5 +110,27 @@ func loadPokemons() []string {
 		log.Fatal(err)
 	}
 
+	log.Infof("Loaded %d pokemon species.", len(pokemonNames))
+
 	return pokemonNames
+}
+
+func loadItems() []string {
+	data, err := ioutil.ReadFile(ItemsFile)
+	if err != nil {
+		log.Fatal("Error loading items file")
+		return nil
+	}
+
+	var itemNames []string
+	err = json.Unmarshal(data, &itemNames)
+
+	if err != nil {
+		log.Errorf("Error unmarshalling item names")
+		log.Fatal(err)
+	}
+
+	log.Infof("Loaded %d items.", len(itemNames))
+
+	return itemNames
 }
