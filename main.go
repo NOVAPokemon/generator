@@ -14,9 +14,13 @@ import (
 // Pokemons taken from https://raw.githubusercontent.com/sindresorhus/pokemon/master/data/en.json
 const PokemonsFile = "pokemons.json"
 const numberOfPokemonsToGenerate = 10
+
 const MaxLevel = 100
 const MaxHP = 500
-const MaxDamage = 250
+const MaxDamage = 500
+
+const stdHPDeviation = float64(MaxHP) / 20
+const stdDamageDeviation = float64(MaxDamage) / 20
 
 const ItemsFile = "items.json"
 const numberOfItemsToGenerate = 10
@@ -51,13 +55,40 @@ func cleanWildPokemons() {
 }
 
 func generateWildPokemons() {
+	var level, hp, damage int
+
 	for i := 0; i < numberOfPokemonsToGenerate; i++ {
+		level = rand.Intn(MaxLevel-1) + 1
+		log.Println("Level: ", level)
+		randNormal := rand.NormFloat64()*
+			(stdHPDeviation*(float64(level)/MaxLevel)) + +
+			(MaxHP * (float64(level) / MaxLevel))
+		hp = int(randNormal)
+		log.Println("HP: ", hp)
+
+		//safeguards
+		if hp < 1 {
+			hp = 1
+		}
+
+		randNormal = rand.NormFloat64()*
+			(stdDamageDeviation*(float64(level)/MaxLevel)) +
+			(MaxDamage * (float64(level) / MaxLevel))
+
+		damage = int(randNormal)
+		log.Println("Damage: ", damage)
+
+		//safeguards
+		if damage < 1 {
+			damage = 1
+		}
+
 		toAdd := utils.Pokemon{
 			Id:      primitive.NewObjectID(),
 			Species: pokemonSpecies[rand.Intn(len(pokemonSpecies))],
-			Level:   rand.Intn(MaxLevel),
-			HP:      rand.Intn(MaxHP),
-			Damage:  rand.Intn(MaxDamage),
+			Level:   level,
+			HP:      hp,
+			Damage:  damage,
 		}
 
 		err, _ := generatordb.AddWildPokemon(toAdd)
