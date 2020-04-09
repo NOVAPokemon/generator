@@ -2,14 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/NOVAPokemon/utils"
 	generatordb "github.com/NOVAPokemon/utils/database/generator"
-	trainerdb "github.com/NOVAPokemon/utils/database/trainer"
-	userdb "github.com/NOVAPokemon/utils/database/user"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"time"
 )
 
@@ -25,20 +25,30 @@ const stdHPDeviation = float64(MaxHP) / 20
 const stdDamageDeviation = float64(MaxDamage) / 20
 
 const ItemsFile = "items.json"
-const numberOfItemsToGenerate = 10
+const numberOfItemsToGenerate = 20
 
 const intervalBetweenGenerations = 2 * time.Minute
 
 var pokemonSpecies = loadPokemons()
 var itemNames = loadItems()
 
+const host = utils.Host
+const port = utils.GeneratorPort
+var addr = fmt.Sprintf("%s:%d", host, port)
+
 func main() {
 	rand.Seed(time.Now().Unix())
 
 	log.Infof("Starting GENERATOR server...\n")
 
-	populateTrainers()
+	go generate()
 
+	r := utils.NewRouter(routes)
+	log.Infof("Starting STORE server in port %d...\n", port)
+	log.Fatal(http.ListenAndServe(addr, r))
+}
+
+func generate() {
 	for {
 		log.Info("Refreshing wild pokemons...")
 		cleanWildPokemons()
@@ -167,19 +177,4 @@ func loadItems() []string {
 	log.Infof("Loaded %d items.", len(itemNames))
 
 	return itemNames
-}
-
-func populateTrainers() {
-	for _, user := range userdb.GetAllUsers() {
-		for i := 0; i < 1; i++ {
-			item := utils.Item{
-				Id:   primitive.NewObjectID(),
-				Name: itemNames[rand.Intn(len(itemNames))],
-			}
-			if _, err := trainerdb.AddItemToTrainer(user.Username, item); err != nil {
-				log.Error(err)
-				return
-			}
-		}
-	}
 }
