@@ -65,7 +65,7 @@ func generateWildPokemons() {
 		level = rand.Intn(MaxLevel-1) + 1
 		log.Println("Level: ", level)
 		randNormal := rand.NormFloat64()*
-			(stdHPDeviation*(float64(level)/MaxLevel)) + +
+			(stdHPDeviation*(float64(level)/MaxLevel)) +
 			(MaxHP * (float64(level) / MaxLevel))
 		hp = int(randNormal)
 		log.Println("HP: ", hp)
