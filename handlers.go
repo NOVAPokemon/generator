@@ -34,7 +34,7 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 
 	caught := rand.Float64() <= catchingProbability
 	caughtMessage := clients.CaughtPokemonMessage{
-		Caught:    caught,
+		Caught: caught,
 	}
 
 	jsonBytes, err := json.Marshal(caughtMessage)

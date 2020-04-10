@@ -34,6 +34,7 @@ var itemNames = loadItems()
 
 const host = utils.Host
 const port = utils.GeneratorPort
+
 var addr = fmt.Sprintf("%s:%d", host, port)
 
 func main() {
