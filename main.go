@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/NOVAPokemon/utils"
 	generatordb "github.com/NOVAPokemon/utils/database/generator"
+	"github.com/NOVAPokemon/utils/items"
+	"github.com/NOVAPokemon/utils/pokemons"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io/ioutil"
@@ -98,11 +100,12 @@ func generateWildPokemons() {
 			damage = 1
 		}
 
-		toAdd := utils.Pokemon{
+		toAdd := pokemons.Pokemon{
 			Id:      primitive.NewObjectID(),
 			Species: pokemonSpecies[rand.Intn(len(pokemonSpecies))],
 			Level:   level,
 			HP:      hp,
+			MaxHP:   hp,
 			Damage:  damage,
 		}
 
@@ -124,9 +127,9 @@ func cleanItems() {
 }
 
 func generateItems() {
-	var toAdd utils.Item
+	var toAdd items.Item
 	for i := 0; i < numberOfItemsToGenerate; i++ {
-		toAdd = utils.Item{
+		toAdd = items.Item{
 			Id:   primitive.NewObjectID(),
 			Name: itemNames[rand.Intn(len(itemNames))],
 		}

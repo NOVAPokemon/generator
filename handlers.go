@@ -6,6 +6,7 @@ import (
 	"github.com/NOVAPokemon/utils"
 	"github.com/NOVAPokemon/utils/clients"
 	generatordb "github.com/NOVAPokemon/utils/database/generator"
+	"github.com/NOVAPokemon/utils/items"
 	"github.com/NOVAPokemon/utils/tokens"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -77,7 +78,7 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loadShopItems() ([]utils.StoreItem, map[string]utils.StoreItem) {
+func loadShopItems() ([]items.StoreItem, map[string]items.StoreItem) {
 
 	data, err := ioutil.ReadFile(ItemsFile)
 	if err != nil {
@@ -86,10 +87,10 @@ func loadShopItems() ([]utils.StoreItem, map[string]utils.StoreItem) {
 		panic(err)
 	}
 
-	var itemsArr []utils.StoreItem
+	var itemsArr []items.StoreItem
 	err = json.Unmarshal(data, &itemsArr)
 
-	var itemsMap = make(map[string]utils.StoreItem, len(itemsArr))
+	var itemsMap = make(map[string]items.StoreItem, len(itemsArr))
 	for _, item := range itemsArr {
 		itemsMap[item.Name] = item
 	}
