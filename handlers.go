@@ -23,8 +23,6 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authTokenString := r.Header.Get(tokens.AuthTokenHeaderName)
-
 	wildPokemons := generatordb.GetWildPokemons()
 	selectedPokemon := &wildPokemons[rand.Intn(len(wildPokemons))]
 
