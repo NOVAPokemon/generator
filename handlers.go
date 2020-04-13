@@ -14,7 +14,7 @@ import (
 	"net/http"
 )
 
-var trainersClient = clients.NewTrainersClient(fmt.Sprintf("%s:%d", utils.Host, utils.TrainersPort))
+var httpClient = &http.Client{}
 
 func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 	authToken, err := tokens.ExtractAndVerifyAuthToken(r.Header)
@@ -23,8 +23,6 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	authTokenString := r.Header.Get(tokens.AuthTokenHeaderName)
 
 	wildPokemons := generatordb.GetWildPokemons()
 	selectedPokemon := &wildPokemons[rand.Intn(len(wildPokemons))]
@@ -54,24 +52,22 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Info(authToken.Username, " caught: ", caught)
-
-	selectedPokemon, err = trainersClient.AddPokemonToTrainer(authToken.Username, *selectedPokemon)
+	var trainersClient = clients.NewTrainersClient(fmt.Sprintf("%s:%d", utils.Host, utils.TrainersPort), httpClient)
+	newPokemons, err := trainersClient.AddPokemonToTrainer(authToken.Username, *selectedPokemon)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	err = trainersClient.GetPokemonsToken(authToken.Username, authTokenString)
-	if err != nil {
-		log.Error(err)
-		return
+	v := make([]string, 0, len(trainersClient.PokemonTokens))
+	for _, value := range trainersClient.PokemonTokens {
+		v = append(v, value)
 	}
 
-	log.Info(trainersClient.PokemonTokens[selectedPokemon.Id.Hex()])
-
-	w.Header()[tokens.PokemonsTokenHeaderName] = []string{trainersClient.PokemonTokens[selectedPokemon.Id.Hex()]}
-	_, err = w.Write(jsonBytes)
+	w.Header()[tokens.PokemonsTokenHeaderName] = v
+	toSend, _ := json.Marshal(newPokemons)
+	_, err = w.Write(toSend)
 	if err != nil {
 		log.Error(err)
 		return
