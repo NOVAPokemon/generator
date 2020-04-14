@@ -14,6 +14,10 @@ import (
 	"net/http"
 )
 
+const (
+	maxCatchingProbability = 100
+)
+
 var httpClient = &http.Client{}
 
 func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
@@ -24,10 +28,28 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var pokeball items.Item
+	err = json.NewDecoder(r.Body).Decode(&pokeball)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	if !pokeball.IsPokeBall() {
+		log.Error("invalid item to catch")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	wildPokemons := generatordb.GetWildPokemons()
 	selectedPokemon := &wildPokemons[rand.Intn(len(wildPokemons))]
 
-	catchingProbability := 1 - (float64(selectedPokemon.Level) / MaxLevel)
+	var catchingProbability float64
+	if pokeball.Effect.Value == maxCatchingProbability {
+		catchingProbability = 1
+	} else {
+		catchingProbability = 1 - ((float64(selectedPokemon.Level) / MaxLevel) * (float64(pokeball.Effect.Value) / maxCatchingProbability))
+	}
 
 	log.Info("catching probability: ", catchingProbability)
 
