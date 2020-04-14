@@ -69,30 +69,28 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 		_, err = w.Write(jsonBytes)
 		if err != nil {
 			log.Error(err)
-			return
 		}
+		return
 	}
 
 	log.Info(authToken.Username, " caught: ", caught)
 	var trainersClient = clients.NewTrainersClient(fmt.Sprintf("%s:%d", utils.Host, utils.TrainersPort), httpClient)
-	newPokemons, err := trainersClient.AddPokemonToTrainer(authToken.Username, *selectedPokemon)
+	_, err = trainersClient.AddPokemonToTrainer(authToken.Username, *selectedPokemon)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	v := make([]string, 0, len(trainersClient.PokemonTokens))
-	for _, value := range trainersClient.PokemonTokens {
-		v = append(v, value)
+	pokemonTokens := make([]string, 0, len(trainersClient.PokemonTokens))
+	for _, tokenString := range trainersClient.PokemonTokens {
+		pokemonTokens = append(pokemonTokens, tokenString)
 	}
 
-	w.Header()[tokens.PokemonsTokenHeaderName] = v
-	toSend, _ := json.Marshal(newPokemons)
-	_, err = w.Write(toSend)
+	w.Header()[tokens.PokemonsTokenHeaderName] = pokemonTokens
+	_, err = w.Write(jsonBytes)
 	if err != nil {
 		log.Error(err)
-		return
 	}
 }
 
