@@ -9,7 +9,6 @@ import (
 	"github.com/NOVAPokemon/utils/items"
 	"github.com/NOVAPokemon/utils/tokens"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 )
@@ -92,32 +91,4 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
-}
-
-func loadShopItems() ([]items.StoreItem, map[string]items.StoreItem) {
-
-	data, err := ioutil.ReadFile(ItemsFile)
-	if err != nil {
-		log.Errorf("Error loading items file ")
-		log.Fatal(err)
-		panic(err)
-	}
-
-	var itemsArr []items.StoreItem
-	err = json.Unmarshal(data, &itemsArr)
-
-	var itemsMap = make(map[string]items.StoreItem, len(itemsArr))
-	for _, item := range itemsArr {
-		itemsMap[item.Name] = item
-	}
-
-	if err != nil {
-		log.Errorf("Error unmarshalling item names")
-		log.Fatal(err)
-		panic(err)
-	}
-
-	log.Infof("Loaded %d items.", len(itemsArr))
-
-	return itemsArr, itemsMap
 }
