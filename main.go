@@ -55,7 +55,7 @@ func generate() {
 	for {
 		log.Info("Refreshing wild pokemons...")
 		cleanWildPokemons()
-		generateWildPokemons()
+		generateWildPokemons(numberOfPokemonsToGenerate)
 		log.Info("Refreshing catchable items...")
 		cleanItems()
 		generateItems()
@@ -71,51 +71,63 @@ func cleanWildPokemons() {
 	}
 }
 
-func generateWildPokemons() {
+func getOneWildPokemon() *pokemons.Pokemon {
 	var level, hp, damage int
+	level = rand.Intn(MaxLevel-1) + 1
+	log.Println("Level: ", level)
+	randNormal := rand.NormFloat64()*
+		(stdHPDeviation*(float64(level)/MaxLevel)) +
+		(MaxHP * (float64(level) / MaxLevel))
+	hp = int(randNormal)
+	log.Println("HP: ", hp)
+
+	//safeguards
+	if hp < 1 {
+		hp = 1
+	}
+
+	randNormal = rand.NormFloat64()*
+		(stdDamageDeviation*(float64(level)/MaxLevel)) +
+		(MaxDamage * (float64(level) / MaxLevel))
+
+	damage = int(randNormal)
+	log.Println("Damage: ", damage)
+
+	//safeguards
+	if damage < 1 {
+		damage = 1
+	}
+
+	wildPokemon := &pokemons.Pokemon{
+		Id:      primitive.NewObjectID(),
+		Species: pokemonSpecies[rand.Intn(len(pokemonSpecies))],
+		Level:   level,
+		HP:      hp,
+		MaxHP:   hp,
+		Damage:  damage,
+	}
+	return wildPokemon
+}
+
+func generateWildPokemons(numberOfPokemonsToGenerate int) {
 
 	for i := 0; i < numberOfPokemonsToGenerate; i++ {
-		level = rand.Intn(MaxLevel-1) + 1
-		log.Println("Level: ", level)
-		randNormal := rand.NormFloat64()*
-			(stdHPDeviation*(float64(level)/MaxLevel)) +
-			(MaxHP * (float64(level) / MaxLevel))
-		hp = int(randNormal)
-		log.Println("HP: ", hp)
 
-		//safeguards
-		if hp < 1 {
-			hp = 1
-		}
-
-		randNormal = rand.NormFloat64()*
-			(stdDamageDeviation*(float64(level)/MaxLevel)) +
-			(MaxDamage * (float64(level) / MaxLevel))
-
-		damage = int(randNormal)
-		log.Println("Damage: ", damage)
-
-		//safeguards
-		if damage < 1 {
-			damage = 1
-		}
-
-		toAdd := pokemons.Pokemon{
-			Id:      primitive.NewObjectID(),
-			Species: pokemonSpecies[rand.Intn(len(pokemonSpecies))],
-			Level:   level,
-			HP:      hp,
-			MaxHP:   hp,
-			Damage:  damage,
-		}
-
-		err, _ := generatordb.AddWildPokemon(toAdd)
+		err, _ := generatordb.AddWildPokemon(*getOneWildPokemon())
 
 		if err != nil {
 			log.Error("Error adding wild pokemon")
 			log.Error(err)
 		}
 	}
+}
+
+func generateRaidBoss() *pokemons.Pokemon { // TODO look at this
+	generated := getOneWildPokemon()
+	generated.Level *= 5
+	generated.HP *= 5
+	generated.MaxHP *= 5
+	return generated
 }
 
 func cleanItems() {

@@ -92,3 +92,8 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 }
+
+func HandleGenerateRaidBoss(w http.ResponseWriter, _ *http.Request) {
+	raidBossMarshaled, _ := json.Marshal(generateRaidBoss())
+	_, _ = w.Write(raidBossMarshaled)
+}
