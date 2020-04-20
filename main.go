@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/NOVAPokemon/utils"
 	generatordb "github.com/NOVAPokemon/utils/database/generator"
-	"github.com/NOVAPokemon/utils/items"
 	"github.com/NOVAPokemon/utils/pokemons"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,24 +14,20 @@ import (
 	"time"
 )
 
+const configFilename = "configs.json"
+
 // Pokemons taken from https://raw.githubusercontent.com/sindresorhus/pokemon/master/data/en.json
 const PokemonsFile = "pokemons.json"
 const numberOfPokemonsToGenerate = 10
 
-const MaxLevel = 100
-const MaxHP = 500
-const MaxDamage = 500
+var (
+	config = loadConfig()
 
-const stdHPDeviation = float64(MaxHP) / 20
-const stdDamageDeviation = float64(MaxDamage) / 20
+	pokemonSpecies = loadPokemons()
 
-const ItemsFile = "items.json"
-const numberOfItemsToGenerate = 20
-
-const intervalBetweenGenerations = 2 * time.Minute
-
-var pokemonSpecies = loadPokemons()
-var itemNames = loadItems()
+	stdHPDeviation     = config.MaxHP / 20
+	stdDamageDeviation = config.MaxDamage / 20
+)
 
 const host = utils.Host
 const port = utils.GeneratorPort
@@ -57,9 +52,7 @@ func generate() {
 		cleanWildPokemons()
 		generateWildPokemons(numberOfPokemonsToGenerate)
 		log.Info("Refreshing catchable items...")
-		cleanItems()
-		generateItems()
-		time.Sleep(intervalBetweenGenerations)
+		time.Sleep(time.Duration(config.IntervalBetweenGenerations) * time.Minute)
 	}
 }
 
@@ -73,11 +66,11 @@ func cleanWildPokemons() {
 
 func getOneWildPokemon() *pokemons.Pokemon {
 	var level, hp, damage int
-	level = rand.Intn(MaxLevel-1) + 1
+	level = rand.Intn(int(config.MaxLevel-1)) + 1
 	log.Println("Level: ", level)
 	randNormal := rand.NormFloat64()*
-		(stdHPDeviation*(float64(level)/MaxLevel)) +
-		(MaxHP * (float64(level) / MaxLevel))
+		(stdHPDeviation*(float64(level)/config.MaxLevel)) +
+		(config.MaxHP * (float64(level) / config.MaxLevel))
 	hp = int(randNormal)
 	log.Println("HP: ", hp)
 
@@ -87,8 +80,8 @@ func getOneWildPokemon() *pokemons.Pokemon {
 	}
 
 	randNormal = rand.NormFloat64()*
-		(stdDamageDeviation*(float64(level)/MaxLevel)) +
-		(MaxDamage * (float64(level) / MaxLevel))
+		(stdDamageDeviation*(float64(level)/config.MaxLevel)) +
+		(config.MaxDamage * (float64(level) / config.MaxLevel))
 
 	damage = int(randNormal)
 	log.Println("Damage: ", damage)
@@ -130,31 +123,6 @@ func generateRaidBoss() *pokemons.Pokemon { // TODO look at this
 	return generated
 }
 
-func cleanItems() {
-	err := generatordb.DeleteCatchableItems()
-
-	if err != nil {
-		return
-	}
-}
-
-func generateItems() {
-	var toAdd items.Item
-	for i := 0; i < numberOfItemsToGenerate; i++ {
-		toAdd = items.Item{
-			Id:   primitive.NewObjectID(),
-			Name: itemNames[rand.Intn(len(itemNames))],
-		}
-
-		err, _ := generatordb.AddCatchableItem(toAdd)
-
-		if err != nil {
-			log.Error("Error adding item")
-			log.Error(err)
-		}
-	}
-}
-
 func loadPokemons() []string {
 	data, err := ioutil.ReadFile(PokemonsFile)
 	if err != nil {
@@ -175,22 +143,20 @@ func loadPokemons() []string {
 	return pokemonNames
 }
 
-func loadItems() []string {
-	data, err := ioutil.ReadFile(ItemsFile)
+func loadConfig() *GeneratorServerConfig {
+	data, err := ioutil.ReadFile(configFilename)
 	if err != nil {
-		log.Fatal("Error loading items file")
+		log.Fatal("Error loading configs")
 		return nil
 	}
 
-	var itemNames []string
-	err = json.Unmarshal(data, &itemNames)
+	var config GeneratorServerConfig
+	err = json.Unmarshal(data, &config)
 
 	if err != nil {
-		log.Errorf("Error unmarshalling item names")
+		log.Errorf("Error unmarshalling configs")
 		log.Fatal(err)
 	}
 
-	log.Infof("Loaded %d items.", len(itemNames))
-
-	return itemNames
+	return &config
 }
