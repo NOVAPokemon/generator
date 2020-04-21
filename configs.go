@@ -1,7 +1,7 @@
 package main
 
 type GeneratorServerConfig struct {
-	IntervalBetweenGenerations int `json:"interval_generate"`	//in minutes
+	IntervalBetweenGenerations int `json:"interval_generate"` //in minutes
 	NumberOfPokemonsToGenerate int `json:"pokemons_to_generate"`
 
 	MaxLevel  float64 `json:"max_level"`

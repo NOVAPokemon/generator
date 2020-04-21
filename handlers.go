@@ -47,7 +47,7 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 	if pokeball.Effect.Value == maxCatchingProbability {
 		catchingProbability = 1
 	} else {
-		catchingProbability = 1 - ((float64(selectedPokemon.Level) / MaxLevel) * (float64(pokeball.Effect.Value) / maxCatchingProbability))
+		catchingProbability = 1 - ((float64(selectedPokemon.Level) / config.MaxLevel) * (float64(pokeball.Effect.Value) / maxCatchingProbability))
 	}
 
 	log.Info("catching probability: ", catchingProbability)
@@ -91,9 +91,4 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
-}
-
-func HandleGenerateRaidBoss(w http.ResponseWriter, _ *http.Request) {
-	raidBossMarshaled, _ := json.Marshal(generateRaidBoss())
-	_, _ = w.Write(raidBossMarshaled)
 }
