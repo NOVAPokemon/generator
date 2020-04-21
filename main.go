@@ -7,7 +7,6 @@ import (
 	generatordb "github.com/NOVAPokemon/utils/database/generator"
 	"github.com/NOVAPokemon/utils/pokemons"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -64,63 +63,17 @@ func cleanWildPokemons() {
 	}
 }
 
-func getOneWildPokemon() *pokemons.Pokemon {
-	var level, hp, damage int
-	level = rand.Intn(int(config.MaxLevel-1)) + 1
-	log.Println("Level: ", level)
-	randNormal := rand.NormFloat64()*
-		(stdHPDeviation*(float64(level)/config.MaxLevel)) +
-		(config.MaxHP * (float64(level) / config.MaxLevel))
-	hp = int(randNormal)
-	log.Println("HP: ", hp)
-
-	//safeguards
-	if hp < 1 {
-		hp = 1
-	}
-
-	randNormal = rand.NormFloat64()*
-		(stdDamageDeviation*(float64(level)/config.MaxLevel)) +
-		(config.MaxDamage * (float64(level) / config.MaxLevel))
-
-	damage = int(randNormal)
-	log.Println("Damage: ", damage)
-
-	//safeguards
-	if damage < 1 {
-		damage = 1
-	}
-
-	wildPokemon := &pokemons.Pokemon{
-		Id:      primitive.NewObjectID(),
-		Species: pokemonSpecies[rand.Intn(len(pokemonSpecies))],
-		Level:   level,
-		HP:      hp,
-		MaxHP:   hp,
-		Damage:  damage,
-	}
-	return wildPokemon
-}
-
 func generateWildPokemons(numberOfPokemonsToGenerate int) {
 
 	for i := 0; i < numberOfPokemonsToGenerate; i++ {
 
-		err, _ := generatordb.AddWildPokemon(*getOneWildPokemon())
+		err, _ := generatordb.AddWildPokemon(*pokemons.GetOneWildPokemon(config.MaxLevel, stdHPDeviation, config.MaxHP, stdDamageDeviation, config.MaxDamage, pokemonSpecies[rand.Intn(len(pokemonSpecies))-1]))
 
 		if err != nil {
 			log.Error("Error adding wild pokemon")
 			log.Error(err)
 		}
 	}
-}
-
-func generateRaidBoss() *pokemons.Pokemon { // TODO look at this
-	generated := getOneWildPokemon()
-	generated.Level *= 5
-	generated.HP *= 5
-	generated.MaxHP *= 5
-	return generated
 }
 
 func loadPokemons() []string {
@@ -158,5 +111,6 @@ func loadConfig() *GeneratorServerConfig {
 		log.Fatal(err)
 	}
 
+	log.Infof("Loaded config: %+v", config)
 	return &config
 }
