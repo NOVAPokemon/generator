@@ -47,7 +47,8 @@ func HandleCatchWildPokemon(w http.ResponseWriter, r *http.Request) {
 	if pokeball.Effect.Value == maxCatchingProbability {
 		catchingProbability = 1
 	} else {
-		catchingProbability = 1 - ((float64(selectedPokemon.Level) / MaxLevel) * (float64(pokeball.Effect.Value) / maxCatchingProbability))
+		catchingProbability = 1 - ((float64(selectedPokemon.Level) / config.MaxLevel) *
+			(float64(pokeball.Effect.Value) / maxCatchingProbability))
 	}
 
 	log.Info("catching probability: ", catchingProbability)
